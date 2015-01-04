@@ -1,0 +1,42 @@
+{
+  "name": "elasticsearch-blockchain",
+  "preferGlobal": false,
+  "version": "0.0.1",
+  "author": "Or Weinberger <orweinberger@gmail.com>",
+  "description": "Load the bitcoin blockchain data into an elasticsearch index",
+  "engine": "node >= 0.10.x",
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/orweinberger/elasticsearch-blockchain.git"
+  },
+  "bugs": "http://github.com/orweinberger/elasticsearch-blockchain/issues",
+  "contributors": [
+    {
+      "name": "Or Weinberger",
+      "email": "orweinberger@gmail.com",
+      "url": "http://joo.la"
+    }
+  ],
+  "scripts": {
+    "start": "node ./index.js"
+  },
+  "main": "./index.js",
+  "keywords": [
+    "blockchain",
+    "bitcoin",
+    "elasticsearch",
+    "analytics",
+    "data"
+  ],
+  "dependencies": {
+    "async": "*",
+    "bitcoin": "*",
+    "elasticsearch": "*"
+  },
+  "engines": {
+    "node": "0.10.*",
+    "npm": "1.4.*"
+  },
+  "license": "MIT"
+}
