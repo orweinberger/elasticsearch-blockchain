@@ -60,7 +60,6 @@ function getLastHeight(cb) {
   }, function (err, result) {
     if (err)
       return cb(err);
-    console.log(result);
     if (result === false)
       return cb(null, 0);
     if (result === true) {
@@ -84,12 +83,13 @@ function run(height) {
       console.log('error at:', height);
       return run(height + 1);
     }
+    doc.txcount = doc.txinfo.length;
     doc.isotime = new Date(doc.time * 1000).toISOString();
     doc._timestamp = {
       "enabled": true,
       "path": "isotime"
     };
-
+    doc.txcount = doc.txinfo.length;
     es.index({
       index: 'blocks',
       type: 'block',
