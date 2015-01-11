@@ -2,10 +2,9 @@ var assert = require("assert");
 var common = require('../lib/common');
 
 describe('bitcoin-core', function () {
-  it('should connect to the bitcoin-core RPC server', function () {
-    common.client.getBalance('*', 6, function (err, result) {
-      if (err) throw err;
-      assert.equal(0, result);
+  it('should connect to the bitcoin-core RPC server', function (done) {
+    common.client.getBalance('*', 6, function (err) {
+      done(err);
     });
   });
   it('should successfully fetch the genesis block', function () {
@@ -63,7 +62,7 @@ describe('elasticSearch', function () {
     });
   });
 
-  it('should return the correct number of transaction for a given block that was inserted into Elasticsearch', function (done) {
+  it('should return the correct number of transactions for a given block that was inserted into Elasticsearch', function (done) {
     common.es.get({
       index: 'blocks_test',
       type: 'block',
