@@ -3,6 +3,12 @@ elasticsearch-blockchain
 
 This node script queries your bitcoin-core client via RPC and inserts data into an elasticsearch index.
 
+### Prerequisites
+
+1. A fully synced bitcoin-core client.
+2. A running ElasticSearch node
+Note that the Elasticsearch index size is ~120GB when the process completes.
+
 ### How does it work?
 
 1. `getLastHeight()` will check if an index named `blocks` already exists in your elasticsearch instance.

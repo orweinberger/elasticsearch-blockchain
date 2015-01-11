@@ -1,4 +1,5 @@
 var common = require('./lib/common');
+var totalblocks;
 
 function run(height) {
   common.getData(height, function (err, doc) {
@@ -19,14 +20,19 @@ function run(height) {
       id: doc.hash,
       body: doc}, function (err, res) {
       console.log('pushed block: ', doc.hash, height);
-      return run(height + 1);
+      if (totalblocks > height + 1)
+        return run(height + 1);
+      else
+        return console.log('DONE!');
     });
-
   });
 }
-
-common.getLastHeight(function (err, height) {
-  if (err)
-    throw err;
-  run(height);
+common.client.getBlockCount(function (err, result) {
+  if (err) throw err;
+  totalblocks = parseInt(result);
+  common.getLastHeight(function (err, height) {
+    if (err) throw err;
+    if (totalblocks > height)
+      run(height);
+  });
 });
