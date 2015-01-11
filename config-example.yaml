@@ -1,0 +1,7 @@
+bitcoind:
+  host: 'localhost'
+  port: 8332
+  username: 'YOUR-BITCOIND-USERNAME'
+  password: 'YOUR-BITCOIND-PASSWORD'
+elasticsearch:
+  hostname: 'localhost:9300'
