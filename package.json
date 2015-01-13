@@ -1,7 +1,7 @@
 {
   "name": "elasticsearch-blockchain",
   "preferGlobal": false,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "Or Weinberger <orweinberger@gmail.com>",
   "description": "Load the bitcoin blockchain data into an elasticsearch index",
   "engine": "node >= 0.10.x",
