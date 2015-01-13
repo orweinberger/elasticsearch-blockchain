@@ -5,6 +5,27 @@ var helper = require('./lib/common'),
 
 var totalblocks;
 
+function preflight() {
+  helper.client.getBlockCount(function (err, result) {
+    if (err) throw err;
+    totalblocks = parseInt(result);
+    helper.getLastHeight(function (err, height) {
+      if (err) throw err;
+      if (totalblocks > height)
+        run(height + 1);
+      else retry(height + 1, 600000);
+    });
+  });
+}
+
+function retry(height, delay) {
+  console.log('Reached last block, sleeping for 10 minutes');
+  setTimeout(function () {
+    console.log('Resuming from block: ' + height);
+    preflight();
+  }, delay);
+}
+
 function run(height) {
   helper.getData(height, function (err, doc) {
     if (err) {
@@ -24,22 +45,13 @@ function run(height) {
       id: doc.hash,
       body: doc}, function (err, res) {
       console.log('pushed block: ', doc.hash, height);
-      if (totalblocks > height + 1)
+      if (totalblocks >= height + 1)
         return run(height + 1);
-      else
-        return console.log('DONE!');
+      else retry(height + 1, 600000);
     });
   });
 }
 
 helper.init(config, function () {
-  helper.client.getBlockCount(function (err, result) {
-    if (err) throw err;
-    totalblocks = parseInt(result);
-    helper.getLastHeight(function (err, height) {
-      if (err) throw err;
-      if (totalblocks > height)
-        run(height);
-    });
-  });
+  preflight();
 });
