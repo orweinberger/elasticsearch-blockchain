@@ -1,8 +1,12 @@
-var common = require('./lib/common');
+var helper = require('./lib/common'),
+  yaml = require('js-yaml'),
+  fs = require('fs'),
+  config = yaml.safeLoad(fs.readFileSync('./config.yaml', 'utf8'));
+
 var totalblocks;
 
 function run(height) {
-  common.getData(height, function (err, doc) {
+  helper.getData(height, function (err, doc) {
     if (err) {
       console.log('error at:', height);
       return run(height + 1);
@@ -14,7 +18,7 @@ function run(height) {
       "path": "isotime"
     };
     doc.txcount = doc.txinfo.length;
-    common.es.index({
+    helper.es.index({
       index: 'blocks',
       type: 'block',
       id: doc.hash,
@@ -27,12 +31,15 @@ function run(height) {
     });
   });
 }
-common.client.getBlockCount(function (err, result) {
-  if (err) throw err;
-  totalblocks = parseInt(result);
-  common.getLastHeight(function (err, height) {
+
+helper.init(config, function () {
+  helper.client.getBlockCount(function (err, result) {
     if (err) throw err;
-    if (totalblocks > height)
-      run(height);
+    totalblocks = parseInt(result);
+    helper.getLastHeight(function (err, height) {
+      if (err) throw err;
+      if (totalblocks > height)
+        run(height);
+    });
   });
 });
