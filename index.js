@@ -6,7 +6,7 @@ var helper = require('./lib/common'),
 var totalblocks;
 
 function preflight() {
-  helper.client.getBlockCount(function (err, result) {
+  helper.getInsightBlockCount(function(err, result) {
     if (err) throw err;
     totalblocks = parseInt(result);
     helper.getLastHeight(function (err, height) {
@@ -34,11 +34,37 @@ function run(height) {
     }
     doc.txcount = doc.txinfo.length;
     doc.isotime = new Date(doc.time * 1000).toISOString();
-    doc._timestamp = {
-      "enabled": true,
-      "path": "isotime"
-    };
-    doc.txcount = doc.txinfo.length;
+
+    doc.txinfo.forEach(function(t) {
+      t.isotime = new Date(t.time * 1000).toISOString();
+      t.in_addresses = [];
+      t.out_addresses = [];
+      if (!t.vin[0].coinbase) {
+        t.isCoinBase = false;
+        t.vin.forEach(function(vin) {
+          t.in_addresses.push(vin.addr);
+        });
+      }
+      
+      t.vout.forEach(function(vout) {
+        vout.scriptPubKey.addresses.forEach(function(addr) {
+          t.out_addresses = t.out_addresses.concat(addr);
+        });
+      });
+      delete t.vout;
+      delete t.vin;
+      delete t.blocktime;
+      delete t.time;
+      helper.es.index({
+        index: 'transactions',
+        type: 'tx',
+        id: t.txid,
+        body: t}, function (err, res) {
+        console.log('pushed txid: ', t.txid, height);
+      });
+    });
+    delete doc.txinfo;
+    delete doc.time;
     helper.es.index({
       index: 'blocks',
       type: 'block',
@@ -49,6 +75,7 @@ function run(height) {
         return run(height + 1);
       else retry(height + 1, 600000);
     });
+    
   });
 }
 
