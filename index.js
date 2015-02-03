@@ -51,6 +51,8 @@ function run(height) {
           t.out_addresses = t.out_addresses.concat(addr);
         });
       });
+      t.in_addresses_count = t.in_addresses.length;
+      t.out_addresses_count = t.out_addresses.length;
       delete t.vout;
       delete t.vin;
       delete t.blocktime;
