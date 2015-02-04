@@ -37,12 +37,12 @@ function run(height) {
         t.in_addresses.forEach(function (in_address) {
           helper.getAddress(in_address, function (err, addr) {
             if (err) throw new Error(err);
-            helper.cleanupaddress(addr, function(address) {
+            helper.cleanupaddress(addr, function(data) {
               var in_doc = {
                 index: 'addresses',
                 type: 'addr',
-                id: address.addrStr,
-                body: address
+                id: data.addrStr,
+                body: data
               };
               helper.pushToElastic(in_doc, function (err) {
                 if (err) throw new Error(err);
@@ -54,12 +54,12 @@ function run(height) {
         t.out_addresses.forEach(function (out_address) {
           helper.getAddress(out_address, function (err, addr) {
             if (err) throw new Error(err);
-            helper.cleanupaddress(addr, function(address) {
+            helper.cleanupaddress(addr, function(data) {
               var out_doc = {
                 index: 'addresses',
                 type: 'addr',
-                id: address.addrStr,
-                body: address
+                id: data.addrStr,
+                body: data
               };
               helper.pushToElastic(out_doc, function (err) {
                 if (err) throw new Error(err);
