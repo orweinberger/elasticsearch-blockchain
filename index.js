@@ -8,8 +8,8 @@ var totalblocks;
 var address_cache = [];
 
 setInterval(function () {
-  if (address_cache.length > 100) address_cache = address_cache.slice(address_cache.length - 100, 100);
   console.log('clearing address cache', address_cache.length);
+  if (address_cache.length > 100) address_cache = address_cache.slice(address_cache.length - 100, 100);
 }, 10000);
 
 function preflight() {
