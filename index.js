@@ -5,6 +5,13 @@ var helper = require('./lib/common'),
 
 var totalblocks;
 
+var address_cache = [];
+
+setInterval(function () {
+  if (address_cache.length > 100) address_cache = address_cache.slice(address_cache.length - 100, 100);
+  console.log('clearing address cache', address_cache.length);
+}, 10000);
+
 function preflight() {
   helper.getInsightBlockCount(function (err, result) {
     if (err) throw err;
@@ -35,39 +42,45 @@ function run(height) {
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
         t.in_addresses.forEach(function (in_address) {
-          helper.getAddress(in_address, function (err, addr) {
-            if (err) throw new Error(err);
-            if (addr) {
+          if (address_cache.indexOf(in_address) > -1) {
+            address_cache.push(in_address);
+            helper.getAddress(in_address, function (err, addr) {
+              if (err) throw new Error(err);
+              if (addr) {
+                helper.cleanupaddress(addr, function (data) {
+                  var in_doc = {
+                    index: 'addresses',
+                    type: 'addr',
+                    id: data.addrStr,
+                    body: data
+                  };
+                  helper.pushToElastic(in_doc, function (err) {
+                    if (err) throw new Error(err);
+                  });
+                });
+              }
+            });
+          }
+        });
+
+        t.out_addresses.forEach(function (out_address) {
+          if (address_cache.indexOf(out_address) > -1) {
+            address_cache.push(out_address);
+            helper.getAddress(out_address, function (err, addr) {
+              if (err) throw new Error(err);
               helper.cleanupaddress(addr, function (data) {
-                var in_doc = {
+                var out_doc = {
                   index: 'addresses',
                   type: 'addr',
                   id: data.addrStr,
                   body: data
                 };
-                helper.pushToElastic(in_doc, function (err) {
+                helper.pushToElastic(out_doc, function (err) {
                   if (err) throw new Error(err);
                 });
               });
-            }
-          })
-        });
-
-        t.out_addresses.forEach(function (out_address) {
-          helper.getAddress(out_address, function (err, addr) {
-            if (err) throw new Error(err);
-            helper.cleanupaddress(addr, function (data) {
-              var out_doc = {
-                index: 'addresses',
-                type: 'addr',
-                id: data.addrStr,
-                body: data
-              };
-              helper.pushToElastic(out_doc, function (err) {
-                if (err) throw new Error(err);
-              });
             });
-          })
+          }
         });
 
         var txdoc = {
