@@ -6,7 +6,7 @@ var helper = require('./lib/common'),
 var totalblocks;
 
 function preflight() {
-  helper.getInsightBlockCount(function(err, result) {
+  helper.getInsightBlockCount(function (err, result) {
     if (err) throw err;
     totalblocks = parseInt(result);
     helper.getLastHeight(function (err, height) {
@@ -35,49 +35,35 @@ function run(height) {
     doc.txcount = doc.txinfo.length;
     doc.isotime = new Date(doc.time * 1000).toISOString();
 
-    doc.txinfo.forEach(function(t) {
-      t.isotime = new Date(t.time * 1000).toISOString();
-      t.in_addresses = [];
-      t.out_addresses = [];
-      if (!t.vin[0].coinbase) {
-        t.isCoinBase = false;
-        t.vin.forEach(function(vin) {
-          t.in_addresses.push(vin.addr);
+    doc.txinfo.forEach(function (tx) {
+      helper.cleanuptx(tx, function (t) {
+        var txdoc = {
+          index: 'transactions',
+          type: 'tx',
+          id: t.txid,
+          body: t
+        };
+        helper.pushToElastic(txdoc, function (err) {
+          if (err) throw new Error(err);
+          console.log('pushed tx', t.txid, height);
         });
-      }
-      
-      t.vout.forEach(function(vout) {
-        vout.scriptPubKey.addresses.forEach(function(addr) {
-          t.out_addresses = t.out_addresses.concat(addr);
-        });
-      });
-      t.in_addresses_count = t.in_addresses.length;
-      t.out_addresses_count = t.out_addresses.length;
-      delete t.vout;
-      delete t.vin;
-      delete t.blocktime;
-      delete t.time;
-      helper.es.index({
-        index: 'transactions',
-        type: 'tx',
-        id: t.txid,
-        body: t}, function (err, res) {
-        console.log('pushed txid: ', t.txid, height);
       });
     });
     delete doc.txinfo;
     delete doc.time;
-    helper.es.index({
+    var blockdoc = {
       index: 'blocks',
       type: 'block',
       id: doc.hash,
-      body: doc}, function (err, res) {
+      body: doc
+    };
+    helper.pushToElastic(blockdoc, function (err) {
+      if (err) throw new Error(err);
       console.log('pushed block: ', doc.hash, height);
       if (totalblocks >= height + 1)
         return run(height + 1);
       else retry(height + 1, 600000);
     });
-    
   });
 }
 
