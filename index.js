@@ -42,7 +42,7 @@ function run(height) {
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
         t.in_addresses.forEach(function (in_address) {
-          if (address_cache.indexOf(in_address) > -1) {
+          if (address_cache.indexOf(in_address) === -1) {
             address_cache.push(in_address);
             helper.getAddress(in_address, function (err, addr) {
               if (err) throw new Error(err);
@@ -64,7 +64,7 @@ function run(height) {
         });
 
         t.out_addresses.forEach(function (out_address) {
-          if (address_cache.indexOf(out_address) > -1) {
+          if (address_cache.indexOf(out_address) === -1) {
             address_cache.push(out_address);
             helper.getAddress(out_address, function (err, addr) {
               if (err) throw new Error(err);
