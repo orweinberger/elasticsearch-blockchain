@@ -35,32 +35,36 @@ function run(height) {
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
         t.in_addresses.forEach(function (in_address) {
-          helper.getBalance(in_address, function (err, balance) {
+          helper.getAddress(in_address, function (err, addr) {
             if (err) throw new Error(err);
-            var in_doc = {
-              index: 'addresses',
-              type: 'addr',
-              id: in_address,
-              body: {"balance": balance}
-            };
-            helper.pushToElastic(in_doc, function (err) {
-              if (err) throw new Error(err);
-            })
+            helper.cleanupaddress(addr, function(address) {
+              var in_doc = {
+                index: 'addresses',
+                type: 'addr',
+                id: address.addrStr,
+                body: address
+              };
+              helper.pushToElastic(in_doc, function (err) {
+                if (err) throw new Error(err);
+              });
+            });
           })
         });
 
         t.out_addresses.forEach(function (out_address) {
-          helper.getBalance(out_address, function (err, balance) {
+          helper.getAddress(out_address, function (err, addr) {
             if (err) throw new Error(err);
-            var in_doc = {
-              index: 'addresses',
-              type: 'addr',
-              id: out_address,
-              body: {"balance": balance}
-            };
-            helper.pushToElastic(in_doc, function (err) {
-              if (err) throw new Error(err);
-            })
+            helper.cleanupaddress(addr, function(address) {
+              var out_doc = {
+                index: 'addresses',
+                type: 'addr',
+                id: address.addrStr,
+                body: address
+              };
+              helper.pushToElastic(out_doc, function (err) {
+                if (err) throw new Error(err);
+              });
+            });
           })
         });
 
