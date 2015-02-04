@@ -32,12 +32,8 @@ function run(height) {
       console.log('error at:', height, err);
       return run(height + 1);
     }
-    doc.txcount = doc.txinfo.length;
-    doc.isotime = new Date(doc.time * 1000).toISOString();
-
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
-
         t.in_addresses.forEach(function (in_address) {
           helper.getBalance(in_address, function (err, balance) {
             if (err) throw new Error(err);
@@ -80,20 +76,20 @@ function run(height) {
         });
       });
     });
-    delete doc.txinfo;
-    delete doc.time;
-    var blockdoc = {
-      index: 'blocks',
-      type: 'block',
-      id: doc.hash,
-      body: doc
-    };
-    helper.pushToElastic(blockdoc, function (err) {
-      if (err) throw new Error(err);
-      console.log('pushed block: ', doc.hash, height);
-      if (totalblocks >= height + 1)
-        return run(height + 1);
-      else retry(height + 1, 600000);
+    helper.cleanupblock(doc, function(block) {
+      var blockdoc = {
+        index: 'blocks',
+        type: 'block',
+        id: block.hash,
+        body: block
+      };
+      helper.pushToElastic(blockdoc, function (err) {
+        if (err) throw new Error(err);
+        console.log('pushed block: ', block.hash, height);
+        if (totalblocks >= height + 1)
+          return run(height + 1);
+        else retry(height + 1, 600000);
+      });
     });
   });
 }
