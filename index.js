@@ -29,7 +29,7 @@ function retry(height, delay) {
 function run(height) {
   helper.getData(height, function (err, doc) {
     if (err) {
-      console.log('error at:', height);
+      console.log('error at:', height, err);
       return run(height + 1);
     }
     doc.txcount = doc.txinfo.length;
@@ -37,6 +37,37 @@ function run(height) {
 
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
+
+        t.in_addresses.forEach(function (in_address) {
+          helper.getBalance(in_address, function (err, balance) {
+            if (err) throw new Error(err);
+            var in_doc = {
+              index: 'addresses',
+              type: 'addr',
+              id: in_address,
+              body: {"balance": balance}
+            };
+            helper.pushToElastic(in_doc, function (err) {
+              if (err) throw new Error(err);
+            })
+          })
+        });
+
+        t.out_addresses.forEach(function (out_address) {
+          helper.getBalance(out_address, function (err, balance) {
+            if (err) throw new Error(err);
+            var in_doc = {
+              index: 'addresses',
+              type: 'addr',
+              id: out_address,
+              body: {"balance": balance}
+            };
+            helper.pushToElastic(in_doc, function (err) {
+              if (err) throw new Error(err);
+            })
+          })
+        });
+
         var txdoc = {
           index: 'transactions',
           type: 'tx',
@@ -66,6 +97,7 @@ function run(height) {
     });
   });
 }
+
 
 helper.init(config, function () {
   preflight();
