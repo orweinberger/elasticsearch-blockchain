@@ -32,6 +32,7 @@
   "dependencies": {
     "async": "*",
     "bitcoin": "*",
+    "bitcore": "^0.9.4",
     "elasticsearch": "*",
     "js-yaml": "^3.2.5",
     "mocha": "*",
