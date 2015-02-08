@@ -7,10 +7,14 @@ var totalblocks;
 
 var address_cache = [];
 
+
+
 setInterval(function () {
   console.log('clearing address cache', address_cache.length);
-  if (address_cache.length > 100) address_cache = address_cache.slice(address_cache.length - 100, 100);
-}, 10000);
+  if (address_cache > 0)
+    address_cache = helper.arrayUnique(address_cache);
+  if (address_cache.length > 1000) address_cache = address_cache.slice(address_cache.length - 1000, 1000);
+}, 30000);
 
 function preflight() {
   helper.getInsightBlockCount(function (err, result) {
@@ -19,8 +23,8 @@ function preflight() {
     helper.getLastHeight(function (err, height) {
       if (err) throw err;
       if (totalblocks > height)
-        run(height + 1);
-      else retry(height + 1, 600000);
+        run(height);
+      else retry(height, 600000);
     });
   });
 }
