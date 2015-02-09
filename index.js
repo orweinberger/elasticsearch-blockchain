@@ -73,7 +73,7 @@ function run(height) {
         });
         async.parallel(injobs, function (err) {
           if (err) throw new Error(err);
-          console.log('in addresses: ', injobs.length, tx.txid);
+          //console.log('in addresses: ', injobs.length, tx.txid);
         });
         var outjobs = [];
         t.out_addresses.forEach(function (out_address) {
@@ -101,7 +101,7 @@ function run(height) {
 
         async.parallel(outjobs, function (err) {
           if (err) throw new Error(err);
-          console.log('out addresses: ', outjobs.length, tx.txid);
+          //console.log('out addresses: ', outjobs.length, tx.txid);
         });
         txjobs.push(function(callback) {
           var txdoc = {
@@ -120,7 +120,7 @@ function run(height) {
     
     async.parallel(txjobs, function(err) {
       if (err) throw new Error(err);
-      console.log('pushed ' + txjobs.length + ' for height: ' + height);
+      console.log('pushed ' + txjobs.length + ' txs for height: ' + height);
     });
     
     helper.cleanupblock(doc, function (block) {
