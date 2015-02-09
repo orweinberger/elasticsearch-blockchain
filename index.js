@@ -89,7 +89,8 @@ function run(height) {
                     body: data
                   };
                   helper.pushToElastic(out_doc, function (err) {
-                    if (err) throw new Error(err);
+                    if (err) return callback(err);
+                    return callback(null);
                   });
                 });
               });
