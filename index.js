@@ -1,7 +1,8 @@
 var helper = require('./lib/common'),
   yaml = require('js-yaml'),
   fs = require('fs'),
-  config = yaml.safeLoad(fs.readFileSync('./config.yaml', 'utf8'));
+  config = yaml.safeLoad(fs.readFileSync('./config.yaml', 'utf8')),
+  async = require('async');
 
 var totalblocks;
 
@@ -42,6 +43,7 @@ function run(height) {
       console.log('error at:', height, err);
       return run(height + 1);
     }
+    var txjobs = [];
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
         var injobs = [];
@@ -71,11 +73,10 @@ function run(height) {
         });
         async.parallel(injobs, function (err) {
           if (err) throw new Error(err);
-          console.log('in addresses: ', injobs.length);
+          console.log('in addresses: ', injobs.length, tx.txid);
         });
-        
+        var outjobs = [];
         t.out_addresses.forEach(function (out_address) {
-          var outjobs = [];
           if (address_cache.indexOf(out_address) === -1) {
             address_cache.push(out_address);
             outjobs.push(function (callback) {
@@ -100,21 +101,28 @@ function run(height) {
 
         async.parallel(outjobs, function (err) {
           if (err) throw new Error(err);
-          console.log('out addresses: ', outjobs.length);
+          console.log('out addresses: ', outjobs.length, tx.txid);
         });
-
-        var txdoc = {
-          index: config.elasticsearch.transactions_index,
-          type: 'tx',
-          id: t.txid,
-          body: t
-        };
-        helper.pushToElastic(txdoc, function (err) {
-          if (err) throw new Error(err);
-          console.log('pushed tx', t.txid, height);
+        txjobs.push(function(callback) {
+          var txdoc = {
+            index: config.elasticsearch.transactions_index,
+            type: 'tx',
+            id: t.txid,
+            body: t
+          };
+          helper.pushToElastic(txdoc, function (err) {
+            if (err) return callback(err);
+            return callback(null);
+          });
         });
       });
     });
+    
+    async.parallel(txjobs, function(err) {
+      if (err) throw new Error(err);
+      console.log('pushed ' + txjobs.length + ' for height: ' + height);
+    });
+    
     helper.cleanupblock(doc, function (block) {
       var blockdoc = {
         index: config.elasticsearch.blocks_index,
