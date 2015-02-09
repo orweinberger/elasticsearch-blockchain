@@ -8,11 +8,12 @@ var totalblocks;
 
 var address_cache = [];
 
-
-setInterval(function () {
-  console.log('clearing address cache', address_cache.length);
+setInterval(function() {
   if (address_cache > 0)
     address_cache = helper.arrayUnique(address_cache);
+}, 5000);
+setInterval(function () {
+  console.log('clearing address cache', address_cache.length);
   if (address_cache.length > 1000) address_cache = address_cache.slice(address_cache.length - 1000, 1000);
 }, 30000);
 
