@@ -8,7 +8,6 @@ var totalblocks;
 var address_cache = [];
 
 
-
 setInterval(function () {
   console.log('clearing address cache', address_cache.length);
   if (address_cache > 0)
@@ -45,50 +44,66 @@ function run(height) {
     }
     doc.txinfo.forEach(function (tx) {
       helper.cleanuptx(tx, function (t) {
+        var injobs = [];
         t.in_addresses.forEach(function (in_address) {
           if (address_cache.indexOf(in_address) === -1) {
             address_cache.push(in_address);
-            helper.getAddress(in_address, function (err, addr) {
-              if (err) throw new Error(err);
-              if (addr) {
+            injobs.push(function (callback) {
+              helper.getAddress(in_address, function (err, addr) {
+                if (err) throw new Error(err);
+                if (addr) {
+                  helper.cleanupaddress(addr, function (data) {
+                    var in_doc = {
+                      index: config.elasticsearch.addresses_index,
+                      type: 'addr',
+                      id: data.addrStr,
+                      body: data
+                    };
+                    helper.pushToElastic(in_doc, function (err) {
+                      if (err) return callback(err);
+                      return callback(null);
+                    });
+                  });
+                }
+              });
+            });
+          }
+        });
+        async.parallel(injobs, function (err) {
+          if (err) throw new Error(err);
+          console.log('in addresses: ', injobs.length);
+        });
+        
+        t.out_addresses.forEach(function (out_address) {
+          var outjobs = [];
+          if (address_cache.indexOf(out_address) === -1) {
+            address_cache.push(out_address);
+            outjobs.push(function (callback) {
+              helper.getAddress(out_address, function (err, addr) {
+                if (err) throw new Error(err);
                 helper.cleanupaddress(addr, function (data) {
-                  var in_doc = {
-                    index: 'addresses',
+                  var out_doc = {
+                    index: config.elasticsearch.addresses_index,
                     type: 'addr',
                     id: data.addrStr,
                     body: data
                   };
-                  helper.pushToElastic(in_doc, function (err) {
+                  helper.pushToElastic(out_doc, function (err) {
                     if (err) throw new Error(err);
                   });
-                });
-              }
-            });
-          }
-        });
-
-        t.out_addresses.forEach(function (out_address) {
-          if (address_cache.indexOf(out_address) === -1) {
-            address_cache.push(out_address);
-            helper.getAddress(out_address, function (err, addr) {
-              if (err) throw new Error(err);
-              helper.cleanupaddress(addr, function (data) {
-                var out_doc = {
-                  index: 'addresses',
-                  type: 'addr',
-                  id: data.addrStr,
-                  body: data
-                };
-                helper.pushToElastic(out_doc, function (err) {
-                  if (err) throw new Error(err);
                 });
               });
             });
           }
         });
 
+        async.parallel(outjobs, function (err) {
+          if (err) throw new Error(err);
+          console.log('out addresses: ', outjobs.length);
+        });
+
         var txdoc = {
-          index: 'transactions',
+          index: config.elasticsearch.transactions_index,
           type: 'tx',
           id: t.txid,
           body: t
@@ -101,7 +116,7 @@ function run(height) {
     });
     helper.cleanupblock(doc, function (block) {
       var blockdoc = {
-        index: 'blocks',
+        index: config.elasticsearch.blocks_index,
         type: 'block',
         id: block.hash,
         body: block
